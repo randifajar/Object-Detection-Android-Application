@@ -1,63 +1,34 @@
 {
   "project_info": {
-    "project_number": "7657590039",
-    "firebase_url": "https://tomato-detection-d62a1-default-rtdb.firebaseio.com",
-    "project_id": "tomato-detection-d62a1",
-    "storage_bucket": "tomato-detection-d62a1.appspot.com"
+    "project_number": "955377390259",
+    "firebase_url": "https://iot-123180079-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "iot-123180079",
+    "storage_bucket": "iot-123180079.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:7657590039:android:12d235f5192aa4327f3b52",
+        "mobilesdk_app_id": "1:955377390259:android:e47dd3061fac6762c616c6",
         "android_client_info": {
           "package_name": "com.detection.tomato"
         }
       },
       "oauth_client": [
         {
-          "client_id": "7657590039-3qbt8ke5c9c26o8it5pud92r5sbte6ie.apps.googleusercontent.com",
+          "client_id": "955377390259-7tsa76d8srhltasa599855kifp5o6ep3.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAtpngEAzPA8RM2gIshZpAlYDbSEu-BFOs"
+          "current_key": "AIzaSyBauOwbmOpIHlXocGPvInZxBeO9amxo45I"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "7657590039-3qbt8ke5c9c26o8it5pud92r5sbte6ie.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:7657590039:android:5c76a1b24c8b033d7f3b52",
-        "android_client_info": {
-          "package_name": "com.detection.tomato_detection"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "7657590039-3qbt8ke5c9c26o8it5pud92r5sbte6ie.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAtpngEAzPA8RM2gIshZpAlYDbSEu-BFOs"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "7657590039-3qbt8ke5c9c26o8it5pud92r5sbte6ie.apps.googleusercontent.com",
+              "client_id": "955377390259-7tsa76d8srhltasa599855kifp5o6ep3.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

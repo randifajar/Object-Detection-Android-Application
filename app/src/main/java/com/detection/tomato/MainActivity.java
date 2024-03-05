@@ -133,13 +133,13 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         mResultClass = findViewById(R.id.resultClass);
         mResultClass.setVisibility(View.INVISIBLE);
 
-        OneTimeWorkRequest refreshRequest = new OneTimeWorkRequest.Builder(RefreshWorker.class)
-                .setInitialDelay(1, TimeUnit.MINUTES)
-//                    .addTag(TAG)
-                .build();
-
-        // Schedule PeriodicWorkRequest
-        WorkManager.getInstance(getApplicationContext()).enqueue(refreshRequest);
+//        OneTimeWorkRequest refreshRequest = new OneTimeWorkRequest.Builder(RefreshWorker.class)
+//                .setInitialDelay(1, TimeUnit.MINUTES)
+////                    .addTag(TAG)
+//                .build();
+//
+//        // Schedule PeriodicWorkRequest
+//        WorkManager.getInstance(getApplicationContext()).enqueue(refreshRequest);
 
         refresh();
 
@@ -307,11 +307,17 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     }
 
     public void refresh() {
-        database.getReference().child("image").addValueEventListener(new ValueEventListener() {
+        // Dapatkan referensi ke file dengan URL
+        StorageReference storageRef = storage.getReferenceFromUrl("https://firebasestorage.googleapis.com/v0/b/iot-123180079.appspot.com/o/data%2Fphoto.jpg");
+
+        // Ambil data dari file
+        storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String image = snapshot.getValue(String.class);
-                Picasso.get().load(image).into(new Target() {
+            public void onSuccess(Uri uri) {
+                // Lakukan sesuatu dengan URL download
+                // Contoh: Tampilkan gambar di ImageView
+
+                Picasso.get().load(uri).into(new Target() {
                     @Override
                     public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                         Matrix matrix = new Matrix();
@@ -328,10 +334,37 @@ public class MainActivity extends AppCompatActivity implements Runnable {
                     }
                 });
             }
-
+        }).addOnFailureListener(new OnFailureListener() {
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
+            public void onFailure(Exception exception) {
+                // Tampilkan pesan error
             }
         });
+//        database.getReference().child("image").addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                String image = snapshot.getValue(String.class);
+//                Picasso.get().load(image).into(new Target() {
+//                    @Override
+//                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+//                        Matrix matrix = new Matrix();
+//                        mBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+//                        mImageView.setImageBitmap(mBitmap);
+//                        detect();
+//                    }
+//
+//                    @Override
+//                    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+//                    }
+//                    @Override
+//                    public void onPrepareLoad(Drawable placeHolderDrawable) {
+//                    }
+//                });
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError error) {
+//            }
+//        });
     }
 }
