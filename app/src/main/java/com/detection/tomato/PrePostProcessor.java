@@ -1,16 +1,9 @@
-// Copyright (c) 2020 Facebook, Inc. and its affiliates.
-// All rights reserved.
-//
-// This source code is licensed under the BSD-style license found in the
-// LICENSE file in the root directory of this source tree.
-
 package com.detection.tomato;
 
 import android.graphics.Rect;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 
 class Result {
@@ -23,23 +16,15 @@ class Result {
         this.score = output;
         this.rect = rect;
     }
-};
+}
 
 public class PrePostProcessor {
     // for yolov5 model, no need to apply MEAN and STD
     static float[] NO_MEAN_RGB = new float[] {0.0f, 0.0f, 0.0f};
     static float[] NO_STD_RGB = new float[] {1.0f, 1.0f, 1.0f};
-
     // model input image size
     static int mInputWidth = 640;
     static int mInputHeight = 640;
-
-    // model output is of size 25200*(num_of_class+5)
-    private static int mOutputRow = 25200; // as decided by the YOLOv5 model for input image of size 640*640
-    private static int mOutputColumn = 7; // left, top, right, bottom, score and 80 class probability
-    private static float mThreshold = 0.30f; // score above which a detection is generated
-    private static int mNmsLimit = 15;
-
     static String[] mClasses;
 
     // The two methods nonMaxSuppression and IOU below are ported from https://github.com/hollance/YOLO-CoreML-MPSNNGraph/blob/master/Common/Helpers.swift
@@ -54,13 +39,7 @@ public class PrePostProcessor {
     static ArrayList<Result> nonMaxSuppression(ArrayList<Result> boxes, int limit, float threshold) {
 
         // Do an argsort on the confidence scores, from high to low.
-        Collections.sort(boxes,
-                new Comparator<Result>() {
-                    @Override
-                    public int compare(Result o1, Result o2) {
-                        return o1.score.compareTo(o2.score);
-                    }
-                });
+        boxes.sort(Comparator.comparing(o -> o.score));
 
         ArrayList<Result> selected = new ArrayList<>();
         boolean[] active = new boolean[boxes.size()];
@@ -118,7 +97,14 @@ public class PrePostProcessor {
 
     static ArrayList<Result> outputsToNMSPredictions(float[] outputs, float imgScaleX, float imgScaleY, float ivScaleX, float ivScaleY, float startX, float startY) {
         ArrayList<Result> results = new ArrayList<>();
+        // score above which a detection is generated
+        float mThreshold = 0.30f;
+        // model output is of size 25200*(num_of_class+5)
+        // as decided by the YOLOv5 model for input image of size 640*640
+        int mOutputRow = 25200;
         for (int i = 0; i< mOutputRow; i++) {
+            // left, top, right, bottom, score and 80 class probability
+            int mOutputColumn = 7;
             if (outputs[i* mOutputColumn +4] > mThreshold) {
                 float x = outputs[i* mOutputColumn];
                 float y = outputs[i* mOutputColumn +1];
@@ -140,10 +126,11 @@ public class PrePostProcessor {
                 }
 
                 Rect rect = new Rect((int)(startX+ivScaleX*left), (int)(startY+top*ivScaleY), (int)(startX+ivScaleX*right), (int)(startY+ivScaleY*bottom));
-                Result result = new Result(cls, outputs[i*mOutputColumn+4], rect);
+                Result result = new Result(cls, outputs[i* mOutputColumn +4], rect);
                 results.add(result);
             }
         }
+        int mNmsLimit = 15;
         return nonMaxSuppression(results, mNmsLimit, mThreshold);
     }
 }

@@ -5,39 +5,26 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -64,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     final Handler handler = new Handler();
     private ImageView mImageView;
     private ResultView mResultView;
-    private ListView mResultClass;
     private ProgressBar mProgressBar;
     FirebaseDatabase database;
     FirebaseStorage storage;
@@ -112,8 +98,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         mImageView.setImageBitmap(mBitmap);
         mResultView = findViewById(R.id.resultView);
         mResultView.setVisibility(View.INVISIBLE);
-        mResultClass = findViewById(R.id.resultClass);
-        mResultClass.setVisibility(View.INVISIBLE);
 
         refresh();
 
@@ -126,19 +110,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             }
         };
         handler.postDelayed(runnable, 10000);
-
-        final Button buttonSelect = findViewById(R.id.selectButton);
-        buttonSelect.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                mResultView.setVisibility(View.INVISIBLE);
-                mResultClass.setVisibility(View.INVISIBLE);
-
-                Intent pickPhoto = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-                startActivityForResult(pickPhoto , 0);
-
-            }
-        });
-
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         try {
@@ -152,65 +123,8 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             PrePostProcessor.mClasses = new String[classes.size()];
             classes.toArray(PrePostProcessor.mClasses);
         } catch (IOException e) {
-            Log.e("Object Detection", "Error reading assets", e);
+            Log.e("Object Detection", "Model tidak ditemukan!", e);
             finish();
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_CANCELED) {
-            switch (requestCode) {
-                case 0:
-                    if (resultCode == RESULT_OK && data != null) {
-                        Uri selectedImage = data.getData();
-                        Log.d("Main Activity", "data: " + data);
-                        Log.d("Main Activity", "data.getData(): " + data.getData());
-                        Log.d("Main Activity", "selectedImage: " + selectedImage);
-                        String[] filePathColumn = {MediaStore.Images.Media.DATA};
-                        if (selectedImage != null) {
-                            Cursor cursor = getContentResolver().query(selectedImage,
-                                    filePathColumn, null, null, null);
-                            if (cursor != null) {
-                                cursor.moveToFirst();
-                                final StorageReference reference = storage.getReference().child("image");
-
-                                reference.putFile(selectedImage).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                                    @Override
-                                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-
-                                        reference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                            @Override
-                                            public void onSuccess(Uri uri) {
-                                                mProgressBar.setVisibility(ProgressBar.INVISIBLE);
-                                                database.getReference().child("image").setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                    @Override
-                                                    public void onSuccess(Void unused) {
-                                                        Toast.makeText(getApplicationContext(), "Image Upload Success", Toast.LENGTH_SHORT).show();
-                                                    }
-                                                });
-                                            }
-                                        });
-                                    }
-                                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                                    @Override
-                                    public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
-                                        mProgressBar.setVisibility(ProgressBar.VISIBLE);
-                                    }
-                                }).addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        mProgressBar.setVisibility(ProgressBar.VISIBLE);
-                                        Toast.makeText(getApplicationContext(), "Image Upload Failed", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                                cursor.close();
-                            }
-                        }
-                    }
-                    break;
-            }
         }
     }
 
@@ -240,22 +154,15 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         final Tensor outputTensor = outputTuple[0].toTensor();
         final float[] outputs = outputTensor.getDataAsFloatArray();
         final ArrayList<Result> results =  PrePostProcessor.outputsToNMSPredictions(outputs, mImgScaleX, mImgScaleY, mIvScaleX, mIvScaleY, mStartX, mStartY);
-        List<String> outputClass = new ArrayList<String>();
-        List<String> matang = new ArrayList<String>();
-
-        System.out.println("=============================== ceqqqqqqqqqqq: "+ results);
+        List<String> matang = new ArrayList<>();
 
         for (Result result : results) {
-            outputClass.add(PrePostProcessor.mClasses[result.classIndex]);
             if (PrePostProcessor.mClasses[result.classIndex].equals("matang")) {
                 matang.add(PrePostProcessor.mClasses[result.classIndex]);
             }
         }
 
-        ArrayAdapter<String> arr;
-        arr = new ArrayAdapter<String>(this, R.layout.support_simple_spinner_dropdown_item, outputClass);
-
-        System.out.println("=============================== panjang matang: "+ matang.size());
+        Log.d("Object Detection", "Jumlah terdeteksi matang: " + matang.size());
 
         if (matang.size() > 0) {
             sendNotification(matang);
@@ -266,24 +173,16 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             mResultView.setResults(results);
             mResultView.invalidate();
             mResultView.setVisibility(View.VISIBLE);
-            mResultClass.setAdapter(arr);
-            mResultClass.invalidate();
-            mResultClass.setVisibility(View.VISIBLE);
         });
-
-
     }
 
     public void sendNotification(List<String> matang) {
 
         NotificationManager mNotifyManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-        //Create the channel. Android will automatically check if the channel already exists
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_ID_STRING, "Deteksi Tomat Matang", NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription("Notifikasi akan muncul jika tomat terdeteksi matang.");
-            mNotifyManager.createNotificationChannel(channel);
-        }
+        NotificationChannel channel = new NotificationChannel(NOTIFICATION_ID_STRING, "Deteksi Tomat Matang", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription("Notifikasi akan muncul jika tomat terdeteksi matang.");
+        mNotifyManager.createNotificationChannel(channel);
 
         NotificationCompat.Builder notifyBuilder
                 = new NotificationCompat.Builder(this, NOTIFICATION_ID_STRING)
@@ -296,31 +195,21 @@ public class MainActivity extends AppCompatActivity implements Runnable {
 
     public void refresh() {
         StorageReference storageRef = storage.getReferenceFromUrl("https://firebasestorage.googleapis.com/v0/b/iot-123180079.appspot.com/o/data%2Fphoto.jpg");
-        storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+        storageRef.getDownloadUrl().addOnSuccessListener(uri -> Picasso.get().load(uri).into(new Target() {
             @Override
-            public void onSuccess(Uri uri) {
-                Picasso.get().load(uri).into(new Target() {
-                    @Override
-                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                        Matrix matrix = new Matrix();
-                        mBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                        mImageView.setImageBitmap(mBitmap);
-                        detect();
-                    }
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                Matrix matrix = new Matrix();
+                mBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                mImageView.setImageBitmap(mBitmap);
+                detect();
+            }
 
-                    @Override
-                    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                    }
-                    @Override
-                    public void onPrepareLoad(Drawable placeHolderDrawable) {
-                    }
-                });
-            }
-        }).addOnFailureListener(new OnFailureListener() {
             @Override
-            public void onFailure(Exception exception) {
-                Toast.makeText(getApplicationContext(), "Gagal Mengambil Data", Toast.LENGTH_SHORT).show();
+            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
             }
-        });
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+            }
+        })).addOnFailureListener(exception -> Toast.makeText(getApplicationContext(), "Gagal Mengambil Data", Toast.LENGTH_SHORT).show());
     }
 }
