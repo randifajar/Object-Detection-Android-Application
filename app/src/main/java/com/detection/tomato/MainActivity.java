@@ -21,6 +21,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -80,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     private static final int NOTIFICATION_ID = 0;
     private static final String NOTIFICATION_ID_STRING = "Notifikasi Hasil Deteksi";
     private static final String TAG = "MainActivity";
+    final Handler handler = new Handler();
     private ImageView mImageView;
     private ResultView mResultView;
     private ListView mResultClass;
@@ -142,6 +144,16 @@ public class MainActivity extends AppCompatActivity implements Runnable {
 //        WorkManager.getInstance(getApplicationContext()).enqueue(refreshRequest);
 
         refresh();
+
+        final Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                Log.d("Main Activity", "Refresh Suskses");
+                refresh();
+                handler.postDelayed(this, 10000);
+            }
+        };
+        handler.postDelayed(runnable, 10000);
 
         final Button buttonSelect = findViewById(R.id.selectButton);
         buttonSelect.setOnClickListener(new View.OnClickListener() {
@@ -246,6 +258,8 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         thread.start();
     }
 
+
+
     @Override
     public void run() {
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(mBitmap, PrePostProcessor.mInputWidth, PrePostProcessor.mInputHeight, true);
@@ -284,6 +298,8 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             mResultClass.invalidate();
             mResultClass.setVisibility(View.VISIBLE);
         });
+
+
     }
 
     public void sendNotification(List<String> matang) {
@@ -307,16 +323,10 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     }
 
     public void refresh() {
-        // Dapatkan referensi ke file dengan URL
         StorageReference storageRef = storage.getReferenceFromUrl("https://firebasestorage.googleapis.com/v0/b/iot-123180079.appspot.com/o/data%2Fphoto.jpg");
-
-        // Ambil data dari file
         storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
-                // Lakukan sesuatu dengan URL download
-                // Contoh: Tampilkan gambar di ImageView
-
                 Picasso.get().load(uri).into(new Target() {
                     @Override
                     public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
@@ -337,34 +347,8 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(Exception exception) {
-                // Tampilkan pesan error
+                Toast.makeText(getApplicationContext(), "Gagal Mengambil Data", Toast.LENGTH_SHORT).show();
             }
         });
-//        database.getReference().child("image").addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                String image = snapshot.getValue(String.class);
-//                Picasso.get().load(image).into(new Target() {
-//                    @Override
-//                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-//                        Matrix matrix = new Matrix();
-//                        mBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-//                        mImageView.setImageBitmap(mBitmap);
-//                        detect();
-//                    }
-//
-//                    @Override
-//                    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-//                    }
-//                    @Override
-//                    public void onPrepareLoad(Drawable placeHolderDrawable) {
-//                    }
-//                });
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//            }
-//        });
     }
 }
