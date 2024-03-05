@@ -1,9 +1,3 @@
-// Copyright (c) 2020 Facebook, Inc. and its affiliates.
-// All rights reserved.
-//
-// This source code is licensed under the BSD-style license found in the
-// LICENSE file in the root directory of this source tree.
-
 package com.detection.tomato;
 
 import android.Manifest;
@@ -15,7 +9,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -37,19 +30,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
-import androidx.work.WorkRequest;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -64,23 +48,19 @@ import org.pytorch.Tensor;
 import org.pytorch.torchvision.TensorImageUtils;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements Runnable {
 
     private static final int NOTIFICATION_ID = 0;
     private static final String NOTIFICATION_ID_STRING = "Notifikasi Hasil Deteksi";
-    private static final String TAG = "MainActivity";
     final Handler handler = new Handler();
     private ImageView mImageView;
     private ResultView mResultView;
@@ -99,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         }
 
         try (InputStream is = context.getAssets().open(assetName)) {
-            try (OutputStream os = new FileOutputStream(file)) {
+            try (OutputStream os = Files.newOutputStream(file.toPath())) {
                 byte[] buffer = new byte[4 * 1024];
                 int read;
                 while ((read = is.read(buffer)) != -1) {
@@ -134,14 +114,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         mResultView.setVisibility(View.INVISIBLE);
         mResultClass = findViewById(R.id.resultClass);
         mResultClass.setVisibility(View.INVISIBLE);
-
-//        OneTimeWorkRequest refreshRequest = new OneTimeWorkRequest.Builder(RefreshWorker.class)
-//                .setInitialDelay(1, TimeUnit.MINUTES)
-////                    .addTag(TAG)
-//                .build();
-//
-//        // Schedule PeriodicWorkRequest
-//        WorkManager.getInstance(getApplicationContext()).enqueue(refreshRequest);
 
         refresh();
 
