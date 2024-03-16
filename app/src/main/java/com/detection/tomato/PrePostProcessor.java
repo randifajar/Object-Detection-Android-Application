@@ -103,7 +103,7 @@ public class PrePostProcessor {
         // as decided by the YOLOv5 model for input image of size 640*640
         int mOutputRow = 25200;
         for (int i = 0; i< mOutputRow; i++) {
-            // left, top, right, bottom, score and 80 class probability
+            // left, top, right, bottom, score and 2 class probability
             int mOutputColumn = 7;
             if (outputs[i* mOutputColumn +4] > mThreshold) {
                 float x = outputs[i* mOutputColumn];

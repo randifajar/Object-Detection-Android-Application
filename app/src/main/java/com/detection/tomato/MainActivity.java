@@ -1,11 +1,9 @@
 package com.detection.tomato;
 
-import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
@@ -18,11 +16,8 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
@@ -52,7 +47,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     private ImageView mImageView;
     private ResultView mResultView;
     private ProgressBar mProgressBar;
-    FirebaseDatabase database;
     FirebaseStorage storage;
     private Bitmap mBitmap = null;
     private Module mModule = null;
@@ -81,17 +75,8 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-        }
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
-        }
-
         setContentView(R.layout.activity_main);
 
-        database = FirebaseDatabase.getInstance();
         storage = FirebaseStorage.getInstance();
 
         mImageView = findViewById(R.id.imageView);
@@ -110,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             }
         };
         handler.postDelayed(runnable, 10000);
+
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         try {
@@ -188,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
                 = new NotificationCompat.Builder(this, NOTIFICATION_ID_STRING)
                 .setContentTitle("Ada Tomat yang Matang!")
                 .setContentText("Jumlah tomat yang sudah matang: " + matang.size() + " buah.")
-                .setSmallIcon(R.drawable.ic_launcher_foreground);
+                .setSmallIcon(R.mipmap.ic_launcher);
         Notification myNotification = notifyBuilder.build();
         mNotifyManager.notify(NOTIFICATION_ID, myNotification);
     }
@@ -203,7 +189,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
                 mImageView.setImageBitmap(mBitmap);
                 detect();
             }
-
             @Override
             public void onBitmapFailed(Exception e, Drawable errorDrawable) {
             }
