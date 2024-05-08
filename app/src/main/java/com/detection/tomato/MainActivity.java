@@ -5,7 +5,12 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -30,6 +35,7 @@ import org.pytorch.Tensor;
 import org.pytorch.torchvision.TensorImageUtils;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +43,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements Runnable {
@@ -51,8 +58,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     private Bitmap mBitmap = null;
     private Module mModule = null;
     private float mImgScaleX, mImgScaleY, mIvScaleX, mIvScaleY, mStartX, mStartY;
-
-    public static String assetFilePath(Context context, String assetName) throws IOException {
+        public static String assetFilePath(Context context, String assetName) throws IOException {
         File file = new File(context.getFilesDir(), assetName);
         if (file.exists() && file.length() > 0) {
             return file.getAbsolutePath();
@@ -130,8 +136,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         thread.start();
     }
 
-
-
     @Override
     public void run() {
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(mBitmap, PrePostProcessor.mInputWidth, PrePostProcessor.mInputHeight, true);
@@ -148,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             }
         }
 
-        Log.d("Object Detection", "Jumlah terdeteksi matang: " + matang.size());
+        uploadImageToFirebase(mBitmap, results);
 
         if (matang.size() > 0) {
             sendNotification(matang);
@@ -177,6 +181,57 @@ public class MainActivity extends AppCompatActivity implements Runnable {
                 .setSmallIcon(R.mipmap.ic_launcher);
         Notification myNotification = notifyBuilder.build();
         mNotifyManager.notify(NOTIFICATION_ID, myNotification);
+    }
+
+    public void uploadImageToFirebase(Bitmap originalBitmap, ArrayList<Result> results) {
+        Date now = new Date();
+        StorageReference storageRef = storage.getReference().child("detection_result/"+now+".jpg");
+        int w = 1440;
+        int h = 1440;
+        int spaceLeft = 0;
+        int spaceTop = 0;
+
+        Bitmap baseBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+
+        if (originalBitmap.getWidth() > originalBitmap.getHeight()) {
+            h = (1440 * originalBitmap.getHeight()) / originalBitmap.getWidth();
+            spaceTop = (1440 - h) / 2;
+        } else if (originalBitmap.getWidth() < originalBitmap.getHeight()) {
+            w = (1440 * originalBitmap.getWidth()) / originalBitmap.getHeight();
+            spaceLeft = (1440 - w) / 2;
+        }
+
+        Bitmap resultBitmap = Bitmap.createScaledBitmap(originalBitmap.copy(Bitmap.Config.ARGB_8888, true), w, h, false);
+
+        Canvas canvas = new Canvas(baseBitmap);
+        canvas.drawBitmap(resultBitmap, spaceLeft, spaceTop, null);
+
+        Paint paintRectangle = new Paint();
+        paintRectangle.setColor(Color.RED);
+        Paint paintText = new Paint();
+
+        for (Result result : results) {
+            paintRectangle.setStrokeWidth(7);
+            paintRectangle.setStyle(Paint.Style.STROKE);
+            canvas.drawRect(result.rect, paintRectangle);
+
+            Path mPath = new Path();
+            RectF mRectF = new RectF(result.rect.left, result.rect.top, result.rect.left + 350,  result.rect.top + 50);
+            mPath.addRect(mRectF, Path.Direction.CW);
+            paintText.setColor(Color.RED);
+            canvas.drawPath(mPath, paintText);
+
+            paintText.setColor(Color.WHITE);
+            paintText.setStrokeWidth(0);
+            paintText.setStyle(Paint.Style.FILL);
+            paintText.setTextSize(32);
+            canvas.drawText(String.format("%s %.2f", PrePostProcessor.mClasses[result.classIndex], result.score), result.rect.left + 40, result.rect.top + 35, paintText);
+        }
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baseBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+        storageRef.putBytes(data);
     }
 
     public void refresh() {

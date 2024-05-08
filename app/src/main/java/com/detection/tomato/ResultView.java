@@ -16,7 +16,7 @@ public class ResultView extends View {
 
     private final static int TEXT_X = 40;
     private final static int TEXT_Y = 35;
-    private final static int TEXT_WIDTH = 260;
+    private final static int TEXT_WIDTH = 350;
     private final static int TEXT_HEIGHT = 50;
 
     private Paint mPaintRectangle;
@@ -30,7 +30,7 @@ public class ResultView extends View {
     public ResultView(Context context, AttributeSet attrs){
         super(context, attrs);
         mPaintRectangle = new Paint();
-        mPaintRectangle.setColor(Color.YELLOW);
+        mPaintRectangle.setColor(Color.RED);
         mPaintText = new Paint();
     }
 
@@ -40,14 +40,14 @@ public class ResultView extends View {
 
         if (mResults == null) return;
         for (Result result : mResults) {
-            mPaintRectangle.setStrokeWidth(5);
+            mPaintRectangle.setStrokeWidth(7);
             mPaintRectangle.setStyle(Paint.Style.STROKE);
             canvas.drawRect(result.rect, mPaintRectangle);
 
             Path mPath = new Path();
             RectF mRectF = new RectF(result.rect.left, result.rect.top, result.rect.left + TEXT_WIDTH,  result.rect.top + TEXT_HEIGHT);
             mPath.addRect(mRectF, Path.Direction.CW);
-            mPaintText.setColor(Color.MAGENTA);
+            mPaintText.setColor(Color.RED);
             canvas.drawPath(mPath, mPaintText);
 
             mPaintText.setColor(Color.WHITE);
