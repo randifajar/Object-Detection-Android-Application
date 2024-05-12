@@ -92,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         final Button buttonSelect = findViewById(R.id.resultsButton);
         buttonSelect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-//                Toast.makeText(MainActivity.this, "Button clicked!", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(MainActivity.this, RetrieveDatabase.class);
                 startActivity(intent);
             }
