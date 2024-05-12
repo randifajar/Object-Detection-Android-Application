@@ -3,10 +3,13 @@ package com.detection.tomato;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -23,8 +26,9 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class RetrieveDatabase extends AppCompatActivity {
+public class RetrieveDatabase extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
+    SwipeRefreshLayout swipeRefreshLayout;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,8 +44,14 @@ public class RetrieveDatabase extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.round_arrow_back);
 
-        RecyclerView recyclerView = findViewById(R.id.recycler);
+        swipeRefreshLayout = findViewById(R.id.swipe);
+        swipeRefreshLayout.setOnRefreshListener(this);
 
+        getImageData();
+    }
+
+    public void getImageData() {
+        RecyclerView recyclerView = findViewById(R.id.recycler);
         FirebaseStorage.getInstance().getReference().child("detection_result").listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
             @Override
             public void onSuccess(ListResult listResult) {
@@ -80,5 +90,16 @@ public class RetrieveDatabase extends AppCompatActivity {
                 Toast.makeText(RetrieveDatabase.this, "Failed to retrieve images", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    @Override
+    public void onRefresh() {
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                getImageData();
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        }, 3000);
     }
 }
