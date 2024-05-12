@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -14,8 +15,10 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -54,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     private ImageView mImageView;
     private ResultView mResultView;
     private ProgressBar mProgressBar;
+    private Button mResultsButton;
     FirebaseStorage storage;
     private Bitmap mBitmap = null;
     private Module mModule = null;
@@ -84,6 +88,15 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         setContentView(R.layout.activity_main);
 
         storage = FirebaseStorage.getInstance();
+
+        final Button buttonSelect = findViewById(R.id.resultsButton);
+        buttonSelect.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+//                Toast.makeText(MainActivity.this, "Button clicked!", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(MainActivity.this, RetrieveDatabase.class);
+                startActivity(intent);
+            }
+        });
 
         mImageView = findViewById(R.id.imageView);
         mImageView.setImageBitmap(mBitmap);
