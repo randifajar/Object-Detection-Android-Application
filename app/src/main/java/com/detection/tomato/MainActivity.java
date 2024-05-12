@@ -15,7 +15,6 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -57,7 +56,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     private ImageView mImageView;
     private ResultView mResultView;
     private ProgressBar mProgressBar;
-    private Button mResultsButton;
     FirebaseStorage storage;
     private Bitmap mBitmap = null;
     private Module mModule = null;
@@ -90,11 +88,9 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         storage = FirebaseStorage.getInstance();
 
         final Button buttonSelect = findViewById(R.id.resultsButton);
-        buttonSelect.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, RetrieveDatabase.class);
-                startActivity(intent);
-            }
+        buttonSelect.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, RetrieveDatabase.class);
+            startActivity(intent);
         });
 
         mImageView = findViewById(R.id.imageView);
@@ -164,6 +160,12 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             }
         }
 
+        Log.d("Main Activity", "mBitmap.getHeight()): " + mBitmap.getHeight());
+        Log.d("Main Activity", "mBitmap.getWidth()): " + mBitmap.getWidth());
+
+        Log.d("Main Activity", "mImageView.getHeight()): " + mImageView.getHeight());
+        Log.d("Main Activity", "mImageView.getWidth()): " + mImageView.getWidth());
+
         uploadImageToFirebase(mBitmap, results);
 
         if (matang.size() > 0) {
@@ -198,19 +200,19 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     public void uploadImageToFirebase(Bitmap originalBitmap, ArrayList<Result> results) {
         Date now = new Date();
         StorageReference storageRef = storage.getReference().child("detection_result/"+now+".jpg");
-        int w = 1440;
-        int h = 1440;
+        int w = mImageView.getWidth();
+        int h = mImageView.getHeight();
         int spaceLeft = 0;
         int spaceTop = 0;
 
         Bitmap baseBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
 
         if (originalBitmap.getWidth() > originalBitmap.getHeight()) {
-            h = (1440 * originalBitmap.getHeight()) / originalBitmap.getWidth();
-            spaceTop = (1440 - h) / 2;
+            h = (mImageView.getWidth() * originalBitmap.getHeight()) / originalBitmap.getWidth();
+            spaceTop = (mImageView.getHeight() - h) / 2;
         } else if (originalBitmap.getWidth() < originalBitmap.getHeight()) {
-            w = (1440 * originalBitmap.getWidth()) / originalBitmap.getHeight();
-            spaceLeft = (1440 - w) / 2;
+            w = (mImageView.getHeight() * originalBitmap.getWidth()) / originalBitmap.getHeight();
+            spaceLeft = (mImageView.getWidth() - w) / 2;
         }
 
         Bitmap resultBitmap = Bitmap.createScaledBitmap(originalBitmap.copy(Bitmap.Config.ARGB_8888, true), w, h, false);

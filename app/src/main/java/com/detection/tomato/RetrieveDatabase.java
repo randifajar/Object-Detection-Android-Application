@@ -1,6 +1,5 @@
 package com.detection.tomato;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -12,19 +11,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.ListResult;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 public class RetrieveDatabase extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
@@ -52,54 +44,34 @@ public class RetrieveDatabase extends AppCompatActivity implements SwipeRefreshL
 
     public void getImageData() {
         RecyclerView recyclerView = findViewById(R.id.recycler);
-        FirebaseStorage.getInstance().getReference().child("detection_result").listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
-            @Override
-            public void onSuccess(ListResult listResult) {
-                ArrayList<Image> arrayList = new ArrayList<>();
-                MyAdapter adapter = new MyAdapter(RetrieveDatabase.this, arrayList);
-                adapter.setOnItemClickListener(new MyAdapter.OnItemClickListener() {
-                    @Override
-                    public void onClick(Image image) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(image.getURL()));
-                        intent.setDataAndType(Uri.parse(image.getURL()), "image/*");
-                        startActivity(intent);
-                    }
+        FirebaseStorage.getInstance().getReference().child("detection_result").listAll().addOnSuccessListener(listResult -> {
+            ArrayList<Image> arrayList = new ArrayList<>();
+            MyAdapter adapter = new MyAdapter(RetrieveDatabase.this, arrayList);
+            adapter.setOnItemClickListener(image -> {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(image.getURL()));
+                intent.setDataAndType(Uri.parse(image.getURL()), "image/*");
+                startActivity(intent);
+            });
+            recyclerView.setAdapter(adapter);
+            listResult.getItems().forEach(storageReference -> {
+                Image image = new Image();
+                image.setName(storageReference.getName());
+                storageReference.getDownloadUrl().addOnCompleteListener(task -> {
+                    String url = "https://" + task.getResult().getEncodedAuthority() + task.getResult().getEncodedPath() + "?alt=media&token=" + task.getResult().getQueryParameters("token").get(0);
+                    image.setURL(url);
+                    arrayList.add(image);
+                    adapter.notifyDataSetChanged();
                 });
-                recyclerView.setAdapter(adapter);
-                listResult.getItems().forEach(new Consumer<StorageReference>() {
-                    @Override
-                    public void accept(StorageReference storageReference) {
-                        Image image = new Image();
-                        image.setName(storageReference.getName());
-                        storageReference.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Uri> task) {
-                                String url = "https://" + task.getResult().getEncodedAuthority() + task.getResult().getEncodedPath() + "?alt=media&token=" + task.getResult().getQueryParameters("token").get(0);
-                                image.setURL(url);
-                                arrayList.add(image);
-                                adapter.notifyDataSetChanged();
-                            }
-                        });
 
-                    }
-                });
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(RetrieveDatabase.this, "Failed to retrieve images", Toast.LENGTH_SHORT).show();
-            }
-        });
+            });
+        }).addOnFailureListener(e -> Toast.makeText(RetrieveDatabase.this, "Failed to retrieve images", Toast.LENGTH_SHORT).show());
     }
 
     @Override
     public void onRefresh() {
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                getImageData();
-                swipeRefreshLayout.setRefreshing(false);
-            }
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            getImageData();
+            swipeRefreshLayout.setRefreshing(false);
         }, 3000);
     }
 }
